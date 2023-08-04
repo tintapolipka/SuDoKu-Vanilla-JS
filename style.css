@@ -1,0 +1,35 @@
+:root{
+    --cellWidth:60px;
+}
+
+*{
+    box-sizing: border-box;
+}
+
+#root{
+    
+    display: flex;
+    flex-wrap: wrap;
+    width: calc(4*var(--cellWidth));
+    aspect-ratio: 1;
+}
+
+.sudokuCell{
+    /*
+    width: var(--cellWidth);
+    height: var(--cellWidth);
+    */
+    padding: 3px;
+    background-color: chocolate;
+    border: 1px solid black;
+    color: wheat;
+    font-size: xx-large;
+}
+
+input{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    display: block;
+    font-size: normal;
+}
