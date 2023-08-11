@@ -4,8 +4,16 @@ const negyzetMeret = 3; //MIN 2 MAX 3!
 const sorHossz = negyzetMeret * negyzetMeret;
 const squareMap = allSquareLister();
 
-//const teljesTabla = [];
+// teljesTabla = [];
 let teljesTabla = [];
+let teljesTablaFlat;
+
+// play control:
+let helpActive = false;
+function helpActiveToggler() {
+  console.log("helpActive: ", helpActive ? "false" : "true");
+  helpActive = helpActive ? false : true;
+}
 
 // general functions
 function rng(int) {
@@ -54,7 +62,7 @@ function allowedInSquare(rowIndex, columnIndex, testNr) {
   function callBackFn(item) {
     let itemToTest = teljesTabla[item[0]] ? teljesTabla[item[0]][item[1]] : 0;
     countFalse += itemToTest !== testNr ? 0 : 1;
-    console.log("countFalse: ", countFalse);
+    //console.log("countFalse: ", countFalse);
   }
   squareMap[groupIndex].forEach(callBackFn);
 
@@ -62,8 +70,9 @@ function allowedInSquare(rowIndex, columnIndex, testNr) {
 }
 
 function teljesTablaGenerator() {
+  teljesTabla = [];
   teljesTabla[0] = randomRow();
-
+  let lefagyasVizsgalo = 0;
   for (let i = 1; i < sorHossz; i++) {
     //új sor hozzáadása a sudoku táblához:
     teljesTabla.push([]);
@@ -86,35 +95,37 @@ function teljesTablaGenerator() {
           console.log("Mindjárt lejár a számláló!");
         }
         let testNr = numLeftArr.shift();
-        console.log("testNr", testNr);
+        //console.log("testNr", testNr);
         if (
           allowedInColumn(testNr, columnIndex) &&
           allowedInSquare(rowIndex, columnIndex, testNr)
         ) {
           teljesTabla[rowIndex][columnIndex] = testNr;
           console.log(i, ". sor", j, ". oszlop: ", testNr, " lett");
+          //lefagyasVizsgalo =0;
         } else {
           numLeftArr.push(testNr);
-          console.log("testNr- ", testNr, "Nem volt jó.");
+          //console.log("testNr- ", testNr, "Nem volt jó.");
         }
-        console.log(numLeftArr);
+        //console.log(numLeftArr);
+        //console.log("biztonsagiSzamlalo: ", biztonsagiSzamlalo);
       }
     }
     if (teljesTabla[teljesTabla.length - 1].length < sorHossz) {
-      console.log("AZ " + i + ".dik SOR ZSÁKUTCA, KEZDJÜK ÚJRA!");
+      console.warn("AZ " + i + ".dik SOR ZSÁKUTCA, KEZDJÜK ÚJRA!");
       teljesTabla.pop();
       i--;
+      lefagyasVizsgalo++;
+      console.error("Lefagyás vizsgáló: " + lefagyasVizsgalo);
+      if (lefagyasVizsgalo > 25) {
+        alert("Ez besült!");
+        lefagyasVizsgalo = 0;
+        return false;
+      }
     }
   }
+  return true;
 }
-
-// Teszthez:
-const probaSudoku = [
-  [1, 2, 3, 4],
-  [3, 4, 1, 2],
-  [2, 1, 4, 3],
-  [4, 3, 2, 1],
-];
 
 // Négyzet ellenőrző funkció:
 
@@ -144,15 +155,31 @@ function id(idName) {
   return document.getElementById(idName);
 }
 
-function renderer() {
-  const sideLength = 45;
+// Rendering variables:
+const board = '<div id="board"></div>';
+const header = `<header>
+  <h1># SuDoKu</h1>
+  <p>JavaScript v01</p>
+</header>`;
+const footer = `<div id="footer"><h3>Máté Zoltán Géza (2023)</h3></div>`
 
-  id("root").innerHTML += `<style>#root{width:${sorHossz * sideLength}px} 
+function renderer() {
+  const SideLengthDerivedFromClientWidth = Math.trunc(
+    document.body.clientWidth / sorHossz
+  );
+  const sideLength =
+    SideLengthDerivedFromClientWidth < 50
+      ? SideLengthDerivedFromClientWidth
+      : 50;
+
+  id("root").innerHTML += header + board + footer;
+
+  id("board").innerHTML += `<style>#board{width:${sorHossz * sideLength}px} 
 .sudokuCell{ width: ${sideLength}px; height: ${sideLength}px; } 
 .sudokuCell:nth-of-type(${negyzetMeret}n){border-right: 4px solid black;}
 </style>`;
   for (let i = 0; i < sorHossz * sorHossz; i++) {
-    id("root").innerHTML += `
+    id("board").innerHTML += `
 <div id="id${i}" class="sudokuCell">${i}</div>
 ${
   i >
@@ -172,8 +199,12 @@ ${
 }
 
 function dataFiller() {
-  teljesTablaGenerator();
-  teljesTabla.flat().forEach((item, index) => {
+  while (!teljesTablaGenerator()) {
+    alert("Nem jó tábla, próbáljuk újra!");
+  }
+
+  teljesTablaFlat = teljesTabla.flat();
+  teljesTablaFlat.forEach((item, index) => {
     id(`id${index}`).innerText = item;
   });
   emptier();
@@ -181,36 +212,201 @@ function dataFiller() {
 
 function emptier() {
   let removedNumbers = [];
+  let numbersLeftInSquares = [];
   for (let i = 0; i < sorHossz; i++) {
     removedNumbers.push([]);
+    numbersLeftInSquares.push([]);
   }
-  const flatTable = teljesTabla.flat();
-  for (let i = 0; i < Math.trunc((sorHossz * sorHossz) / 1.3); i++) {
+
+  function witchSquare(index) {
+    return (
+      (Math.floor(index / negyzetMeret) % negyzetMeret) +
+      Math.floor(index / negyzetMeret / sorHossz) * negyzetMeret
+    );
+  }
+
+  const flatTable = [...teljesTablaFlat];
+  for (let i = 0; i < Math.trunc((sorHossz * sorHossz) / 1.1); i++) {
     let rngNr = rng(sorHossz * sorHossz - 1);
     let numberToStore = flatTable[rngNr];
     // If-check-et, hogy mennyi van már abból a számból a store-ban!
-    if (flatTable[rngNr] && removedNumbers[numberToStore - 1].length < sorHossz - negyzetMeret) {
+
+    let blockNr = witchSquare(rngNr);
+
+    if (
+      flatTable[rngNr] &&
+      removedNumbers[numberToStore - 1].length < sorHossz - negyzetMeret &&
+      numbersLeftInSquares[blockNr].length < sorHossz - negyzetMeret
+    ) {
       removedNumbers[numberToStore - 1].push(numberToStore);
-      id(`id${rngNr}`).innerHTML = '<input type="text" />';
+
+      numbersLeftInSquares[blockNr].push(rngNr);
+
+      id(
+        `id${rngNr}`
+      ).innerHTML = `<textarea cols="1" rows="1" onblur="onBlurFunction(${rngNr})"></textarea>`;
       flatTable[rngNr] = false;
     }
   }
-  console.log("removedNumbers", removedNumbers);
+
+  //Math.floor(index/sorHossz) - sor száma
+  //index%sorHossz - oszlop száma
 }
 
-function validator(){
-  let vegsoEredmeny = teljesTabla.flat();
-  let hibaSzam = 0;
-  for(let i =0; i<vegsoEredmeny.length; i++){
-    let numToCompare = id(`id${i}`).firstElementChild ? id(`id${i}`).firstElementChild.value : id(`id${i}`).textContent;
-    
-    if(numToCompare == vegsoEredmeny[i]){id(`id${i}`).textContent = numToCompare;} else {hibaSzam++};
+// Súgó funkciók:
+// Cella információ kinyerő funkció:
+function cellContentNr(index) {
+  return id(`id${index}`).firstElementChild
+    ? +id(`id${index}`).firstElementChild.value
+    : +id(`id${index}`).textContent;
+}
 
+/* sor ellenőrző funkció: 
+  Az indexet fogadja, és az alapján visszadja azokat a számokat, amik nem szerepelnek még*/
+function numbersLeftInThisRow(index) {
+  let allnumbers = [];
+  for (let i = 0; i < sorHossz; i++) {
+    allnumbers.push(i + 1);
   }
-  console.log('hibaSzam: ', hibaSzam)
+  // a vizsgálat kezdő négyzete
+  let firstCell = Math.floor(index / sorHossz) * sorHossz;
 
+  for (let j = firstCell; j < firstCell + sorHossz; j++) {
+    let numToCompare = cellContentNr(j);
+
+    let indexOfNumToDelete = allnumbers.indexOf(+numToCompare);
+
+    if (indexOfNumToDelete !== -1) {
+      allnumbers.splice(indexOfNumToDelete, 1);
+    }
+  }
+  return allnumbers;
 }
 
+function numbersLeftInColumn(index, arrayOfNumbersLeft) {
+  let arrToReturn = arrayOfNumbersLeft;
+  let firstIncolumn = index % sorHossz;
+  for (let i = firstIncolumn; i < sorHossz * sorHossz; i += sorHossz) {
+    if (arrToReturn.length > 0) {
+      //kiszervezhető kód: index és maradék array fogadásával, maradék array kimenettel
+      let numToCompare = cellContentNr(i);
+      let indexOfNumToDelete = arrToReturn.indexOf(+numToCompare);
+
+      if (indexOfNumToDelete !== -1) {
+        arrToReturn.splice(indexOfNumToDelete, 1);
+      }
+    }
+  }
+  return arrToReturn;
+}
+
+function numberLeftInThisSquare(index, testArray) {
+  let arrToReturn = testArray;
+
+  const groupIndex =
+    (Math.floor(index / negyzetMeret) % negyzetMeret) +
+    Math.floor(index / negyzetMeret / sorHossz) * negyzetMeret;
+
+  for (let i = 0; i < sorHossz; i++) {
+    const index =
+      squareMap[groupIndex][i][0] * sorHossz + squareMap[groupIndex][i][1];
+    //kiszervezhető kód: index és maradék array fogadásával, maradék array kimenettel
+    let numToCompare = cellContentNr(index);
+    let indexOfNumToDelete = arrToReturn.indexOf(+numToCompare);
+
+    if (indexOfNumToDelete !== -1) {
+      arrToReturn.splice(indexOfNumToDelete, 1);
+    }
+  }
+
+  return arrToReturn;
+}
+
+// placeholder beillesztő funkció, ami az indexet, majd a string formátumú placeholdert fogadja
+function setPlaceHolder(index, placeHolderText = "123456") {
+  if (id(`id${index}`).firstElementChild) {
+    id(`id${index}`).firstElementChild.placeholder = placeHolderText;
+    //A maradék lépések számolásához
+    return 1;
+  }
+  return 0;
+}
+// minden placeholdert beállít
+function setEveryPlaceHolders() {
+  //számolja, hogy befulladt-e a játék
+  let obviousMoves = 0;
+  for (let i = 0; i < sorHossz * sorHossz; i++) {
+    if (id(`id${i}`).firstElementChild) {
+      let array = numberLeftInThisSquare(
+        i,
+        numbersLeftInColumn(i, numbersLeftInThisRow(i))
+      );
+      if (helpActive) {
+        setPlaceHolder(i, array);
+      }
+      if (array.length === 1) {
+        obviousMoves++;
+      }
+    }
+  }
+  console.log("obviousMoves:", obviousMoves);
+
+  if (obviousMoves < 1) {
+    validator();
+    // Nézzük hány textarea maradt még?
+    const allTextArea = getAllTextAreasOnBoard();
+    // Ha már csak egy maradt:
+    if (allTextArea.length < 1) {
+      alert("Nyertél, gratulálok!");
+      return;
+    }
+
+    alert(
+      "Nincs több egyértelmű lépés! Válassz egy mezőt, aminek felfedjük az értékét!"
+    );
+
+    allTextArea.forEach((textarea) => {
+      textarea.addEventListener("click", function (e) {
+        console.log("klikk");
+        revealACell(e.target.parentElement.id.match(/\d+/)[0]);
+      });
+      textarea.onblur = "";
+    });
+  }
+}
+
+function onBlurFunction(index) {
+  setEveryPlaceHolders();
+}
+
+function getAllTextAreasOnBoard() {
+  return document.getElementById("board").querySelectorAll("textarea");
+}
+
+function revealACell(index) {
+  id(`id${index}`).innerHTML = teljesTablaFlat[index];
+  const allTextArea = getAllTextAreasOnBoard();
+  allTextArea.forEach((textarea) => {
+    const replaceWidh = textarea.cloneNode();
+    textarea.parentNode.replaceChild(replaceWidh, textarea);
+  });
+}
+
+function validator() {
+  let hibaSzam = 0;
+  for (let i = 0; i < teljesTablaFlat.length; i++) {
+    let numToCompare = cellContentNr(i);
+
+    if (numToCompare == teljesTablaFlat[i]) {
+      id(`id${i}`).textContent = numToCompare;
+    } else {
+      hibaSzam++;
+    }
+  }
+  console.log("hibaSzam: ", hibaSzam);
+}
 
 // TESZT:
-renderer(); dataFiller();
+
+renderer();
+dataFiller();
