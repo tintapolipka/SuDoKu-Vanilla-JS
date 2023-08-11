@@ -13,6 +13,11 @@ let helpActive = false;
 function helpActiveToggler() {
   console.log("helpActive: ", helpActive ? "false" : "true");
   helpActive = helpActive ? false : true;
+  id('help-button').textContent = helpActive ? "Súgó kikapcsolása" : "Súgó bekapcsolása"
+  if(helpActive){setEveryPlaceHolders()} else {
+    const allTextArea = getAllTextAreasOnBoard();
+    allTextArea.forEach((textarea)=>{textarea.placeholder = '';})
+  }
 }
 
 // general functions
@@ -118,7 +123,7 @@ function teljesTablaGenerator() {
       lefagyasVizsgalo++;
       console.error("Lefagyás vizsgáló: " + lefagyasVizsgalo);
       if (lefagyasVizsgalo > 25) {
-        alert("Ez besült!");
+        //alert("Ez besült!");
         lefagyasVizsgalo = 0;
         return false;
       }
@@ -200,7 +205,7 @@ ${
 
 function dataFiller() {
   while (!teljesTablaGenerator()) {
-    alert("Nem jó tábla, próbáljuk újra!");
+    console.warn("Nem jó tábla, próbáljuk újra!");
   }
 
   teljesTablaFlat = teljesTabla.flat();
