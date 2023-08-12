@@ -99,9 +99,35 @@ button{
     padding:1rem;
     transition-duration: 400ms;
     transition-timing-function: ease-in-out;
+    margin: 0.5rem;
 }
 
 button:active, button:hover{
     background-color: rgba(226, 177, 55, 0.609);
     border-radius: 0 30% 0 30%;
+}
+
+#gameDiv{
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#controls{
+  display: flex;
+  flex-direction: row;
+}
+
+@media  (width > 550px) {
+  #gameDiv{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  #controls{
+    display: flex;
+    flex-direction: column;
+  }
 }

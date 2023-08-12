@@ -166,7 +166,30 @@ const header = `<header>
   <h1># SuDoKu</h1>
   <p>JavaScript v01</p>
 </header>`;
-const footer = `<div id="footer"><h3>Máté Zoltán Géza (2023)</h3></div>`
+
+const controls = `<div id="controls">
+<button onclick="validator()">Válaszok ellenőrzése</button>
+<button id="help-button" onclick="helpActiveToggler()">Súgó bekapcsolása</button>
+<button onclick="document.getElementById('how-to-play').showModal()">Szabályok</button>
+</div>`;
+
+const game = `<div id="gameDiv">${board + controls}</div>`;
+
+const newGameButton = `<button onclick="location.reload()">Új játékot szeretnék!</button>`;
+
+const footer = `<div id="footer"><h3>Máté Zoltán Géza (2023)</h3></div>`;
+const modal = `<dialog id="how-to-play">
+<h2>Mi a Sudoku?</h2>
+<p>A Sudoku egy 9 × 9 cellából álló rács. A rács kilenc kisebb, 3 × 3-as blokkra oszlik, amelyben
+elszórva néhány 1-től 9-ig terjedő számot találunk. Az üresen maradt cellákat a játékosok töltik
+ki saját (ugyancsak 1-től 9-ig terjedő) számaikkal úgy, hogy minden vízszintes sorban, függőleges
+oszlopban, és 3 × 3-as blokkban az 1-től 9-ig terjedő számok pontosan egyszer szerepeljenek.</p>
+<h2>Mik ezek a gombok?</h2>
+<p>A <button>Válaszok ellenőrzése</button> gomb megnyomásával a helyesen beírt számok háttere megváltozik, a helyteleneké azonban fehér marad.</p>
+<p>A <button>Súgó bekapcsolása</button> gomb megjeleníti a lehetséges lépéseket. Újbóli megnyomásával a lehetséges számok eltüntethetők.</p>
+<h2>Hogyan nyerhetek?</h2>
+<p>Be kell írnod minden számot a helyére. Amikor az utolsó üres mezőt is kitöltötted nyertél. A táblák random generáltak, ezért lehetséges, hogy nem lesz több egyértelmű lépés. Ekkor a játék automatikusan segíteni fog.</p>
+<button onclick="document.getElementById('how-to-play').close()">Értem már!</button></dialog>`;
 
 function renderer() {
   const SideLengthDerivedFromClientWidth = Math.trunc(
@@ -177,7 +200,7 @@ function renderer() {
       ? SideLengthDerivedFromClientWidth
       : 50;
 
-  id("root").innerHTML += header + board + footer;
+  id("root").innerHTML += header + game+ footer + modal;
 
   id("board").innerHTML += `<style>#board{width:${sorHossz * sideLength}px} 
 .sudokuCell{ width: ${sideLength}px; height: ${sideLength}px; } 
@@ -363,6 +386,7 @@ function setEveryPlaceHolders() {
     // Ha már csak egy maradt:
     if (allTextArea.length < 1) {
       alert("Nyertél, gratulálok!");
+      id('controls').innerHTML = newGameButton;
       return;
     }
 
