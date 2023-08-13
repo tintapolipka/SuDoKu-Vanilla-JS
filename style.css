@@ -130,4 +130,8 @@ button:active, button:hover{
     display: flex;
     flex-direction: column;
   }
+
+  dialog{
+    max-width: 75%;
+  }
 }

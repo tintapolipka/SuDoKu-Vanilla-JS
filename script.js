@@ -397,8 +397,11 @@ function setEveryPlaceHolders() {
     allTextArea.forEach((textarea) => {
       textarea.addEventListener("click", function (e) {
         console.log("klikk");
+        
         revealACell(e.target.parentElement.id.match(/\d+/)[0]);
+        document.querySelectorAll('.sudokuCell').forEach((cell)=>cell.classList="sudokuCell");
       });
+      textarea.parentElement.classList.add('reveal-this-area');
       textarea.onblur = "";
     });
   }
