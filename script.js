@@ -378,6 +378,7 @@ function setEveryPlaceHolders() {
     }
   }
   console.log("obviousMoves:", obviousMoves);
+  document.querySelector('#available-moves span').innerText = obviousMoves
 
   if (obviousMoves < 1) {
     validator();
